@@ -3,18 +3,13 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 import psycopg2
 
-connection = psycopg2.connect(dbname='products', user='postgres',
-                              password='admin0312', host='localhost')
-cursor = connection.cursor()
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0",
-    "Accept-Encoding": "*",
-    "Connection": "keep-alive"
-}
-
-
-def parse(max=14):
+def parse(max):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:66.0) Gecko/20100101 Firefox/66.0",
+        "Accept-Encoding": "*",
+        "Connection": "keep-alive"
+    }
     data = []
     for j in tqdm(range(1, max)):
         url = 'https://azbykamebeli.ru/catalog/0000057/?page=' + str(j)
@@ -46,17 +41,21 @@ def parse(max=14):
     return data
 
 
-data = parse()
+if __name__ == '__main__':
+    connection = psycopg2.connect(dbname='products', user='postgres',
+                                  password='admin0', host='localhost')
+    cursor = connection.cursor()
+    data = parse(14)
 
-for i in data:
-    insert_query = """ INSERT INTO public.sofas (
- name, artikul, price,price_without_discount, availability,sofa_id) VALUES (
- '{}'::character varying, '{}'::character varying, 
-'{}'::numeric, '{}'::numeric, '{}'::integer,'{}'::integer)""".format(i["name"], i["artikul"], i["price"],
-                                                                     i["price_without_discount"], i["availability"],
-                                                                     i["id"])
+    for i in data:
+        insert_query = """ INSERT INTO public.sofas (
+     name, artikul, price,price_without_discount, availability,sofa_id) VALUES (
+     '{}'::character varying, '{}'::character varying, 
+    '{}'::numeric, '{}'::numeric, '{}'::integer,'{}'::integer)""".format(i["name"], i["artikul"], i["price"],
+                                                                         i["price_without_discount"], i["availability"],
+                                                                         i["id"])
 
-    cursor.execute(insert_query)
+        cursor.execute(insert_query)
     connection.commit()
 
 # Запросы на графики
